@@ -2,7 +2,21 @@
 
 This internship set out to solve a central remote-sensing problem: how to translate TEMPO's hourly tropospheric NO₂ column measurements into the ground-level NO₂ concentrations actually experienced at EPA monitoring sites. The core statewide XGBoost digital twin demonstrated that this bridge is physically meaningful and operationally useful. By fusing TEMPO retrievals with meteorological reanalysis and GIS infrastructure, the final California model achieved an out-of-sample accuracy of R² = 0.852 with RMSE = 3.09 ppb and MAE = 1.92 ppb across nearly 48,000 unseen testing hours, while still reproducing the morning rush-hour accumulation and afternoon photochemical decay that once-daily polar-orbiting satellites cannot resolve.
 
-The newer follow-on analyses provide a more complete picture of what this framework can do under realistic deployment settings. In the JPL final presentation, temporal holdout experiments outperformed harder spatial holdout tests across every domain that was examined, with R² values of 0.792 in the Los Angeles Basin, 0.825 across California, and 0.773 across the Western United States. When short-term persistence information was added, those scores increased to 0.909, 0.901, and 0.889, respectively, with corresponding RMSE values of 2.84, 2.49, and 2.35 ppb. These results show that TEMPO plus meteorology already contains strong predictive skill over large regions, but they also show that carrying short-term memory is one of the clearest ways to stabilize the digital twin for forecasting-oriented applications.
+The newer follow-on analyses provide a more complete picture of what this framework can do under realistic deployment settings. In the JPL final presentation, temporal holdout experiments outperformed harder spatial holdout tests across every domain that was examined. Table 1 below summarizes the final XGBoost model performance across the three geographic scopes evaluated in this project:
+
+| Region | Test | R² | MAE (ppb) | RMSE (ppb) | Bias (ppb) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| LA Basin | Spatial holdout | 0.536 | 4.78 | 6.55 | +0.09 |
+| LA Basin | Temporal holdout | 0.792 | 2.94 | 4.31 | -0.04 |
+| LA Basin | Temporal + persistence | 0.909 | 1.80 | 2.84 | +0.13 |
+| California | Spatial holdout | 0.592 | 3.55 | 5.39 | +0.54 |
+| California | Temporal holdout | 0.825 | 2.18 | 3.63 | -0.13 |
+| California | Temporal + persistence | 0.901 | 1.39 | 2.49 | +0.06 |
+| Western US | Spatial holdout | 0.530 | 3.65 | 5.71 | +0.20 |
+| Western US | Temporal holdout | 0.773 | 2.07 | 3.37 | -0.01 |
+| Western US | Temporal + persistence | 0.889 | 1.32 | 2.35 | +0.05 |
+
+Across all three domains, the temporal holdout configuration materially improved on the harder spatial holdout benchmark, and adding short-term persistence information improved performance even further. These results show that TEMPO plus meteorology already contains strong predictive skill over large regions, but they also show that carrying short-term memory is one of the clearest ways to stabilize the digital twin for forecasting-oriented applications.
 
 The supplemental TEMPO NO₂ results also clarified the most important remaining weakness: rare high-concentration spikes. Only about 2.5% of observations exceeded 30 ppb, a project-defined threshold used to mark unusually elevated events, yet these episodes are the most relevant for acute public-health exposure and the most difficult for an average-error objective to learn. In the baseline spike analysis, the model underpredicted spike rows by +10.4 ppb on average and identified only 37.6% of true spikes. Targeted experiments substantially improved this behavior. Switching to quantile regression reduced spike underprediction to +2.5 ppb and increased spike capture to 73%; adding yesterday's NO₂ as a lagged predictor increased Top-1% purity—the fraction of the model's top-ranked spike warnings that were real spikes—from 76% to 78%; and incorporating nearby power-plant emissions produced the best overall spike-screening model, reaching 79% Top-1% purity, 70.4% spike recall (the share of true spikes successfully flagged), and a reduced spike bias of +3.8 ppb on spike rows. Taken together, these experiments suggest that the model is becoming much better at identifying when an extreme event is likely, even if it still struggles to recover the exact magnitude of the largest episodes.
 
